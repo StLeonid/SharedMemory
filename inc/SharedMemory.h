@@ -13,14 +13,14 @@ void sm_init(void *addr);
 /**
  * @brief возращает общее количество элементов данных
  * 
- * @return int 
+ * @return int - количество элементов данных
  */
 int sm_get_number_rec(void);
 
 /**
  * @brief добавляет данные в конец память
  * 
- * @param cnt - размер в байтах данных
+ * @param cnt - размер данных в байтах
  * @param data - указатель на данные
  */
 void sm_add_data(uint32_t len, void *in_data);
