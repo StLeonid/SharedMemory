@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "tost.h": "c",
-        "stdio.h": "c",
-        "stddef.h": "c",
-        "string.h": "c",
-        "sharedmemory.h": "c"
-    }
-}
