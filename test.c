@@ -52,6 +52,10 @@ int main(void){
     //sm_delete_data(sm_get_number_rec());
     sm_delete_data(5);
     sm_delete_data(3);
+    sm_delete_data(1);
+    sm_delete_data(7);
+    sm_delete_data(9);
+    sm_delete_data(4);
 
     //////////////////////////////////////////////////////
     // читаю 
