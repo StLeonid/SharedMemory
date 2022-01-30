@@ -8,7 +8,7 @@
             "name": "gcc.exe - Сборка и отладка активного файла",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
+            "program": "${fileDirname}/output/test.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
