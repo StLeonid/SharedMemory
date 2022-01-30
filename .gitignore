@@ -1,2 +1,3 @@
-src/SharedMemory.exe
-test.exe
+
+output/test.exe
+.vscode/tasks.json

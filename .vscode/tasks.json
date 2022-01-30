@@ -15,7 +15,7 @@
                 "-I",
                 "${workspaceFolder}/inc/",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "${fileDirname}/output/test.exe",
 
             ],
             "options": {
