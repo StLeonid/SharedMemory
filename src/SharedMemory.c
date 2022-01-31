@@ -11,13 +11,51 @@ struct _sms_t
 {
     uint32_t magic;
     uint32_t version;
-    uint32_t crc;
+    bool check_crc;     // проверять или нет целостность данных
+    uint32_t crc;       // сохранение CRC
     size_t size;        // размер пула данных
     sm_cnt_element cnt; // количество элементов данных
 };
 
 typedef struct _sms_t *_sms_p_t;
 static _sms_p_t sm;
+
+typedef uint32_t crc;
+
+#define WIDTH (8 * sizeof(crc))
+#define TOPBIT (1 << (WIDTH - 1))
+#define POLYNOMIAL 0xD8 /* 11011 followed by 0's */
+
+/**
+ * @brief 
+ * 
+ * @param message - входные данные
+ * @param nBytes - размер входных данных в байтах
+ * @return crc - возвращает расчитаное число CRC
+ */
+__attribute__((weak)) crc _crcSlow(uint8_t const message[], int nBytes)
+{
+    crc remainder = 0;
+
+    for (int byte = 0; byte < nBytes; ++byte)
+    {
+        remainder ^= (message[byte] << (WIDTH - 8));
+
+        for (uint8_t bit = 8; bit > 0; --bit)
+        {
+            if (remainder & TOPBIT)
+            {
+                remainder = (remainder << 1) ^ POLYNOMIAL;
+            }
+            else
+            {
+                remainder = (remainder << 1);
+            }
+        }
+    }
+
+    return (remainder);
+}
 
 /**
  * @brief смещается на указанную позицию в потоке файла
@@ -31,7 +69,8 @@ static uint8_t *_seek_data(sm_cnt_element poz)
 
     for (sm_cnt_element i = 0; i < poz; i++)
     {
-        ptr += (*ptr) + sizeof(uint32_t);
+        size_t *ptr_size = (size_t *)ptr;
+        ptr += (*ptr_size) + sizeof(size_t);
     }
 
     return ptr;
@@ -44,7 +83,7 @@ static uint8_t *_seek_data(sm_cnt_element poz)
  * @param size - размер пула данных
  * @return sm_status - статус выполнения
  */
-sm_status sm_init(void *addr, size_t size)
+sm_status sm_init(void *addr, size_t size, bool crc)
 {
     if (addr == NULL)
     {
@@ -59,6 +98,36 @@ sm_status sm_init(void *addr, size_t size)
         sm->magic = MAGIC_NUMBER;
         sm->version = VERSION;
         sm->size = size;
+        sm->check_crc = crc;
+        if (sm->check_crc)
+        {
+            size_t size = sm_get_data_size();
+            uint8_t *ptr = (uint8_t *)sm + sizeof(struct _sms_t) + 1;
+            sm->crc = _crcSlow(ptr, size);
+        }
+    }
+
+    return SM_SUCCESS;
+}
+
+/**
+ * @brief зануляет выделеную память
+ * 
+ * @return sm_status - возвращает статус выполнения
+ */
+sm_status sm_deinit(void)
+{
+    if (sm == NULL)
+    {
+        return ADDR_ERROR;
+    }
+
+    if (sm->magic != MAGIC_NUMBER)
+    {
+        size_t size = sm_get_data_size();
+        uint8_t *ptr = (uint8_t *)sm + sizeof(struct _sms_t) + 1;
+        memset(ptr, 0, size);
+        memset(sm, 0, sizeof(struct _sms_t));
     }
 
     return SM_SUCCESS;
@@ -83,15 +152,20 @@ size_t sm_get_data_size(void)
 {
     size_t len_all = 0;
 
+    if (sm->magic != MAGIC_NUMBER)
+    {
+        return len_all;
+    }
+
     sm_cnt_element cnt = sm_get_number_rec();
 
     for (sm_cnt_element i = 0; i < cnt; i++)
     {
-        uint8_t *ptr_n = _seek_data(i);
+        size_t *ptr_n = (size_t*)_seek_data(i);
 
         if (ptr_n != NULL)
         {
-            len_all += *ptr_n + sizeof(uint32_t);
+            len_all += *ptr_n + sizeof(size_t);
         }
     }
 
@@ -105,7 +179,7 @@ size_t sm_get_data_size(void)
  * @param *in_data - указатель на данные
  * @return sm_status - статус выполнения
  */
-sm_status sm_add_data(uint32_t len, void *in_data)
+sm_status sm_add_data(size_t len, void *in_data)
 {
     if (sm->magic != MAGIC_NUMBER)
     {
@@ -129,15 +203,35 @@ sm_status sm_add_data(uint32_t len, void *in_data)
         return SIZE_ERROR;
     }
 
+    // проверяем целостность данных перед записью
+    crc CRC = 0;
+    if (sm->check_crc)
+    {
+        uint8_t *ptr = (uint8_t *)sm + sizeof(struct _sms_t) + 1;
+        CRC = _crcSlow(ptr, size);
+        if (sm->crc != CRC)
+        {
+            return CRC_ERROR;
+        }
+    }
+
     // смещаемся на конец данных
-    uint8_t *ptr = _seek_data(sm->cnt);
+    size_t *ptr = (size_t*)_seek_data(sm->cnt);
 
     if (ptr != NULL)
     {
-        *(uint32_t *)ptr = len;
-        ptr += sizeof(uint32_t);
+        *ptr = len;
+        ptr++;
         memcpy(ptr, (uint8_t *)in_data, len);
         sm->cnt++;
+
+        // если требуется обновляем CRC
+        if (sm->check_crc)
+        {
+            size = sm_get_data_size();
+            uint8_t *ptr = (uint8_t *)sm + sizeof(struct _sms_t) + 1;
+            sm->crc = _crcSlow(ptr, size);
+        }
     }
     else
     {
@@ -152,11 +246,11 @@ sm_status sm_add_data(uint32_t len, void *in_data)
  * 
  * @param poz - позиция данных в потоке начинается с 0
  * @param out_data - указатель на выходные данные
- * @return uint32_t - возращает длинну данных в байтах
+ * @return size_t - возращает длинну данных в байтах
  */
-uint32_t sm_read_data(sm_cnt_element poz, void *out_data)
+size_t sm_read_data(sm_cnt_element poz, void *out_data)
 {
-    uint32_t len = 0;
+    size_t len = 0;
 
     if (sm->magic != MAGIC_NUMBER)
     {
@@ -173,12 +267,25 @@ uint32_t sm_read_data(sm_cnt_element poz, void *out_data)
         return len;
     }
 
-    uint8_t *ptr = _seek_data(poz);
+    // проверяем целостность данных перед записью
+    crc CRC = 0;
+    if (sm->check_crc)
+    {
+        size_t size = sm_get_data_size();
+        uint8_t *ptr = (uint8_t *)sm + sizeof(struct _sms_t) + 1;
+        CRC = _crcSlow(ptr, size);
+        if (sm->crc != CRC)
+        {
+            return len;
+        }
+    }
+
+    size_t *ptr = (size_t*)_seek_data(poz);
 
     if (ptr != NULL)
     {
         len = *ptr;
-        ptr += sizeof(uint32_t);
+        ptr++;
         memcpy(out_data, ptr, len);
     }
 
@@ -218,27 +325,35 @@ sm_status sm_delete_data(sm_cnt_element poz)
         return SM_SUCCESS;
     }
 
-    uint32_t len_all = 0;
-    uint8_t *ptr_n;
+    size_t len_all = 0;
+    size_t *ptr_n;
 
     for (sm_cnt_element i = poz; i < sm->cnt; i++)
     {
-        ptr_n = _seek_data(i);
+        ptr_n = (size_t*)_seek_data(i);
 
         if (ptr_n != NULL)
         {
-            len_all += *ptr_n + sizeof(uint32_t);
+            len_all += *ptr_n + sizeof(size_t);
         }
     }
 
     // указатель на следущие данные после удаляемых
-    ptr_n = _seek_data((poz + 1));
+    ptr_n = (size_t*)_seek_data((poz + 1));
 
     if (ptr_n != NULL)
     {
         // копируем хвост на место удаленных
         memcpy(ptr_del, ptr_n, len_all);
         sm->cnt--;
+
+        // если требуется обновляем CRC
+        if (sm->check_crc)
+        {
+            size_t size = sm_get_data_size();
+            uint8_t *ptr = (uint8_t *)sm + sizeof(struct _sms_t) + 1;
+            sm->crc = _crcSlow(ptr, size);
+        }
     }
     else
     {

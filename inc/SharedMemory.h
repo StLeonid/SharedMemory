@@ -2,6 +2,7 @@
 #define __SHARED_MEMORY_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum{
     SM_SUCCESS,
@@ -20,7 +21,14 @@ typedef uint32_t sm_cnt_element;
  * @param addr - начальный адрес расположения данных 
  * @param size - размер пула данных
  */
-sm_status sm_init(void *addr, size_t size);
+sm_status sm_init(void *addr, size_t size, bool crc);
+
+/**
+ * @brief зануляет выделеную память
+ * 
+ * @return sm_status - возвращает статус выполнения
+ */
+sm_status sm_deinit(void);
 
 /**
  * @brief возращает общее количество элементов данных
@@ -43,16 +51,16 @@ size_t sm_get_data_size(void);
  * @param *in_data - указатель на данные
  * @return sm_status - статус выполнения
  */
-sm_status sm_add_data(uint32_t len, void *in_data);
+sm_status sm_add_data(size_t len, void *in_data);
 
 /**
  * @brief читает данные из памяти по указанной позиции
  * 
  * @param poz - позиция данных в потоке начинается с 0
  * @param out_data - указатель на выходные данные
- * @return uint32_t - возращает длинну данных в байтах
+ * @return size_t - возращает длинну данных в байтах
  */
-uint32_t sm_read_data(sm_cnt_element poz, void *out_data);
+size_t sm_read_data(sm_cnt_element poz, void *out_data);
 
 /**
  * @brief  удаляет данные по указанной позиции
