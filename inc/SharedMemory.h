@@ -6,11 +6,11 @@
 
 typedef enum{
     SM_SUCCESS,
-    MAGIC_ERROR,// не отформатирована память
-    CRC_ERROR,  // ошибка расчета CRC
-    ADDR_ERROR, // не корректно задан адрес пула памяти
-    DATA_ERROR, // не корректные данные для записи
-    SIZE_ERROR  // не хватка памяти для записи в пул памяти
+    SM_MAGIC_ERROR,// не отформатирована память
+    SM_CRC_ERROR,  // ошибка расчета CRC
+    SM_ADDR_ERROR, // не корректно задан адрес пула памяти
+    SM_DATA_ERROR, // не корректные данные для записи
+    SM_SIZE_ERROR  // не хватка памяти для записи в пул памяти
 }sm_status;
 
 typedef uint32_t sm_cnt_element;

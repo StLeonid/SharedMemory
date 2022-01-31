@@ -87,7 +87,7 @@ sm_status sm_init(void *addr, size_t size, bool crc)
 {
     if (addr == NULL)
     {
-        return ADDR_ERROR;
+        return SM_ADDR_ERROR;
     }
 
     sm = addr;
@@ -119,7 +119,7 @@ sm_status sm_deinit(void)
 {
     if (sm == NULL)
     {
-        return ADDR_ERROR;
+        return SM_ADDR_ERROR;
     }
 
     if (sm->magic != MAGIC_NUMBER)
@@ -183,24 +183,24 @@ sm_status sm_add_data(size_t len, void *in_data)
 {
     if (sm->magic != MAGIC_NUMBER)
     {
-        return MAGIC_ERROR;
+        return SM_MAGIC_ERROR;
     }
 
     if (len == 0)
     {
-        return DATA_ERROR;
+        return SM_DATA_ERROR;
     }
 
     if (in_data == NULL)
     {
-        return DATA_ERROR;
+        return SM_DATA_ERROR;
     }
 
     // расход памяти
     size_t size = sm_get_data_size();
     if ((size + len) > sm->size)
     {
-        return SIZE_ERROR;
+        return SM_SIZE_ERROR;
     }
 
     // проверяем целостность данных перед записью
@@ -211,7 +211,7 @@ sm_status sm_add_data(size_t len, void *in_data)
         CRC = _crcSlow(ptr, size);
         if (sm->crc != CRC)
         {
-            return CRC_ERROR;
+            return SM_CRC_ERROR;
         }
     }
 
@@ -235,7 +235,7 @@ sm_status sm_add_data(size_t len, void *in_data)
     }
     else
     {
-        return DATA_ERROR;
+        return SM_DATA_ERROR;
     }
 
     return SM_SUCCESS;
@@ -302,19 +302,19 @@ sm_status sm_delete_data(sm_cnt_element poz)
 {
     if (sm->magic != MAGIC_NUMBER)
     {
-        return MAGIC_ERROR;
+        return SM_MAGIC_ERROR;
     }
 
     if (sm->cnt < (poz + 1))
     {
-        return DATA_ERROR;
+        return SM_DATA_ERROR;
     }
 
     uint8_t *ptr_del = _seek_data(poz);
 
     if (ptr_del == NULL)
     {
-        return DATA_ERROR;
+        return SM_DATA_ERROR;
     }
 
     // последняя позиция?
@@ -357,7 +357,7 @@ sm_status sm_delete_data(sm_cnt_element poz)
     }
     else
     {
-        return DATA_ERROR;
+        return SM_DATA_ERROR;
     }
 
     return SM_SUCCESS;
