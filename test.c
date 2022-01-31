@@ -2,12 +2,13 @@
 #include <string.h>
 #include "SharedMemory.h"
 
-int main(void){
+int main(void)
+{
     char memory[1024];
     memset(&memory[0], 0, sizeof(memory));
 
     // инициализирую
-    sm_init(&memory);
+    sm_init(&memory, sizeof(memory));
 
     printf("init cnt = %d\n\n", sm_get_number_rec());
 
@@ -15,25 +16,41 @@ int main(void){
 
     ///////////////////////////////////////////////////////
     // пишу
-    for(uint32_t i = 1; i <= 10; i++){
+    sm_status stat;
+    for (uint32_t i = 0; i <= 10; i++)
+    {
         memset(&out_data[0], 0, sizeof(out_data));
         sprintf(&out_data[0], "%s %d", "test", i);
-        sm_add_data(strlen(&out_data[0]), &out_data[0]);
+        stat = sm_add_data(strlen(&out_data[0]), &out_data[0]);
+        if (stat != SM_SUCCESS)
+        {
+            printf("error = %d", (int)stat);
+        }
     }
 
     // еще пишу
-    sm_add_data(strlen("hello world!"), "hello world!");
+    stat = sm_add_data(strlen("hello world!"), "hello world!");
+    if (stat != SM_SUCCESS)
+    {
+        printf("error = %d", (int)stat);
+    }
 
     // пишу цифру
     int i = 1234567890;
-    sm_add_data(sizeof(int), &i);
+    stat = sm_add_data(sizeof(int), &i);
+    if (stat != SM_SUCCESS)
+    {
+        printf("error = %d", (int)stat);
+    }
 
     ///////////////////////////////////////////////////////
-    // читаю 
+    // читаю
     uint32_t len;
     uint32_t cnt = sm_get_number_rec();
-    
-    for(uint32_t i = 1; i <= (cnt - 1); i++){
+    size_t dataSize = sm_get_data_size();
+
+    for (uint32_t i = 0; i < (cnt - 1); i++)
+    {
         memset(&out_data[0], 0, sizeof(out_data));
         len = sm_read_data(i, &out_data[0]);
         printf("data len = %d, %s\n", len, &out_data[0]);
@@ -41,34 +58,55 @@ int main(void){
 
     // читаю цифру
     int out_i;
-    len = sm_read_data(sm_get_number_rec(), &out_i);
+    len = sm_read_data((sm_get_number_rec() - 1), &out_i);
     printf("data len = %d, %d\n", len, out_i);
 
-    printf("cnt = %d\n\n", sm_get_number_rec());
+    printf("cnt = %d, size = %d byte\n\n", cnt, (int)dataSize);
 
     ///////////////////////////////////////////////////////
-    // удаляю 
-    sm_delete_data(sm_get_number_rec()-1);
-    //sm_delete_data(sm_get_number_rec());
-    sm_delete_data(1);
-    sm_delete_data(3);
+    // удаляю
+    stat = sm_delete_data(sm_get_number_rec() - 2);
+    if (stat != SM_SUCCESS)
+    {
+        printf("error = %d", (int)stat);
+    }
+
+    stat = sm_delete_data(sm_get_number_rec() - 1);
+    if (stat != SM_SUCCESS)
+    {
+        printf("error = %d", (int)stat);
+    }
+
+    stat = sm_delete_data(1);
+    if (stat != SM_SUCCESS)
+    {
+        printf("error = %d", (int)stat);
+    }
+
+    stat = sm_delete_data(3);
+    if (stat != SM_SUCCESS)
+    {
+        printf("error = %d", (int)stat);
+    }
 
     //////////////////////////////////////////////////////
-    // читаю 
-    
-    cnt = sm_get_number_rec();
+    // читаю
 
-    for(uint32_t i = 1; i <= (cnt - 1); i++){
+    cnt = sm_get_number_rec();
+    dataSize = sm_get_data_size();
+
+    for (uint32_t i = 0; i < (cnt - 1); i++)
+    {
         memset(&out_data[0], 0, sizeof(out_data));
         len = sm_read_data(i, &out_data[0]);
         printf("data len = %d, %s\n", len, &out_data[0]);
     }
 
     // читаю цифру
-    len = sm_read_data(sm_get_number_rec(), &out_i);
+    len = sm_read_data((sm_get_number_rec() - 1), &out_i);
     printf("data len = %d, %d\n", len, out_i);
 
-    printf("cnt = %d\n", cnt);
+    printf("cnt = %d, size = %d byte\n\n", cnt, (int)dataSize);
 
     char symbol;
     scanf("%c", &symbol);
