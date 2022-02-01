@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef enum{
     SM_SUCCESS,
@@ -28,9 +29,11 @@ sm_status sm_init(void *addr, size_t size, bool crc);
 /**
  * @brief зануляет выделеную память
  * 
+ * @param addr - начальный адрес расположения данных
+ * @param size - размер пула данных
  * @return sm_status - возвращает статус выполнения
  */
-sm_status sm_deinit(void);
+sm_status sm_deinit(void *addr, size_t size);
 
 /**
  * @brief возращает общее количество элементов данных

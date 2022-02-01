@@ -8,7 +8,7 @@ int main(void)
     memset(&memory[0], 0, sizeof(memory));
 
     // инициализирую
-    sm_deinit();
+    sm_deinit(&memory, sizeof(memory));
     sm_init(&memory, sizeof(memory), true);
 
     printf("init cnt = %d\n\n", sm_get_number_rec());

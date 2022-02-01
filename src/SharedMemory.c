@@ -114,22 +114,20 @@ sm_status sm_init(void *addr, size_t size, bool crc)
 /**
  * @brief зануляет выделеную память
  * 
+ * @param addr - начальный адрес расположения данных
+ * @param size - размер пула данных
  * @return sm_status - возвращает статус выполнения
  */
-sm_status sm_deinit(void)
+sm_status sm_deinit(void *addr, size_t size)
 {
-    if (sm == NULL)
+    if (addr == NULL)
     {
         return SM_ADDR_ERROR;
     }
 
-    if (sm->magic != MAGIC_NUMBER)
-    {
-        size_t size = sm_get_data_size();
-        uint8_t *ptr = (uint8_t *)sm + sizeof(struct _sms_t) + 1;
-        memset(ptr, 0, size);
-        memset(sm, 0, sizeof(struct _sms_t));
-    }
+    sm = addr;
+
+    memset(sm, 0, size);
 
     return SM_SUCCESS;
 }
