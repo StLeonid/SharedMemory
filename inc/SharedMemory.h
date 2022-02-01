@@ -20,6 +20,8 @@ typedef uint32_t sm_cnt_element;
  * 
  * @param addr - начальный адрес расположения данных 
  * @param size - размер пула данных
+ * @param crc - используем проверку целостности данных или нет (true, false соответственно)
+ * @return sm_status - статус выполнения
  */
 sm_status sm_init(void *addr, size_t size, bool crc);
 
@@ -45,7 +47,7 @@ sm_cnt_element sm_get_number_rec(void);
 size_t sm_get_data_size(void);
 
 /**
- * @brief добавляет данные в конец память
+ * @brief добавляет данные в конец памяти
  * 
  * @param len - размер данных в байтах
  * @param *in_data - указатель на данные
