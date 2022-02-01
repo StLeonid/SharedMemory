@@ -81,6 +81,7 @@ static uint8_t *_seek_data(sm_cnt_element poz)
  * 
  * @param addr - начальный адрес расположения данных 
  * @param size - размер пула данных
+ * @param crc - используем проверку целостности данных или нет (true, false соответственно)
  * @return sm_status - статус выполнения
  */
 sm_status sm_init(void *addr, size_t size, bool crc)

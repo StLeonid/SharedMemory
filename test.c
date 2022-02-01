@@ -58,12 +58,12 @@ int main(void)
         {
             memset(&out_data[0], 0, sizeof(out_data));
             len = sm_read_data(i, &out_data[0]);
-            printf("data len = %d, %s\n", len, &out_data[0]);
+            printf("data len = %lld, %s\n", len, &out_data[0]);
         }
 
         // читаю цифру
         len = sm_read_data((sm_get_number_rec() - 1), &out_i);
-        printf("data len = %d, %d\n", len, out_i);
+        printf("data len = %lld, %d\n", len, out_i);
 
         printf("cnt = %d, size = %d byte\n\n", cnt, (int)dataSize);
     }
@@ -107,12 +107,12 @@ int main(void)
         {
             memset(&out_data[0], 0, sizeof(out_data));
             len = sm_read_data(i, &out_data[0]);
-            printf("data len = %d, %s\n", len, &out_data[0]);
+            printf("data len = %lld, %s\n", len, &out_data[0]);
         }
 
         // читаю цифру
         len = sm_read_data((sm_get_number_rec() - 1), &out_i);
-        printf("data len = %d, %d\n", len, out_i);
+        printf("data len = %lld, %d\n", len, out_i);
     }
 
     printf("cnt = %d, size = %d byte\n\n", cnt, (int)dataSize);
